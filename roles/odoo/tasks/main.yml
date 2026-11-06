@@ -6,14 +6,16 @@
     mode: "0750"
   loop: [config, addons]
 
-# odoo.conf bevat het admin-wachtwoord. De officiële image draait als uid 101.
+# odoo.conf bevat het admin-wachtwoord. Tijdelijk 0644 omdat de uid van de
+# odoo-gebruiker in de image niet bevestigd is. Zet na verificatie
+# (docker run --rm --entrypoint id odoo:<versie> odoo) owner op die uid en mode op 0400.
 - name: odoo.conf renderen
   ansible.builtin.template:
     src: odoo.conf.j2
     dest: "{{ base_dir }}/odoo/config/odoo.conf"
-    owner: "101"
-    group: "101"
-    mode: "0400"
+    owner: root
+    group: root
+    mode: "0644"
 
 - name: Odoo docker-compose renderen
   ansible.builtin.template:
