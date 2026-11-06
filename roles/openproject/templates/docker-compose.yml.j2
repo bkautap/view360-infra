@@ -32,7 +32,7 @@ services:
       OPENPROJECT_OPENID__CONNECT_KEYCLOAK_DISPLAY__NAME: "Keycloak"
       OPENPROJECT_OPENID__CONNECT_KEYCLOAK_IDENTIFIER: "openproject"
       OPENPROJECT_OPENID__CONNECT_KEYCLOAK_SECRET: "{{ vault_keycloak_client_openproject_secret }}"
-      OPENPROJECT_OPENID__CONNECT_KEYCLOAK_ISSUER: "https://{{ keycloak_host }}/realms/view360"
+      OPENPROJECT_OPENID__CONNECT_KEYCLOAK_ISSUER: "https://{{ keycloak_host }}/realms/leadership3"
     volumes:
       - openproject-assets:/var/openproject/assets
     networks: [proxy, op-backend]

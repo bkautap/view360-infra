@@ -1,6 +1,6 @@
 ---
-- name: View360 platform uitrollen
-  hosts: view360
+- name: leadership3 platform uitrollen
+  hosts: leadership3
   become: true
 
   pre_tasks:

@@ -34,7 +34,7 @@ services:
       KC_BOOTSTRAP_ADMIN_USERNAME: admin
       KC_BOOTSTRAP_ADMIN_PASSWORD: "{{ vault_keycloak_admin_password }}"
     volumes:
-      - ./realm/view360-realm.json:/opt/keycloak/data/import/view360-realm.json:ro
+      - ./realm/leadership3-realm.json:/opt/keycloak/data/import/leadership3-realm.json:ro
     networks: [proxy, keycloak-backend]
     security_opt:
       - "no-new-privileges:true"

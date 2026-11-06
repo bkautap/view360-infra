@@ -8,8 +8,8 @@
 # Realm bevat clientsecrets. Keycloak-image draait als uid 1000.
 - name: Realm-import renderen
   ansible.builtin.template:
-    src: view360-realm.json.j2
-    dest: "{{ base_dir }}/keycloak/realm/view360-realm.json"
+    src: leadership3-realm.json.j2
+    dest: "{{ base_dir }}/keycloak/realm/leadership3-realm.json"
     owner: "1000"
     group: "1000"
     mode: "0400"
@@ -29,7 +29,7 @@
 
 - name: Controleer publieke OIDC-discovery
   ansible.builtin.uri:
-    url: "https://{{ keycloak_host }}/realms/view360/.well-known/openid-configuration"
+    url: "https://{{ keycloak_host }}/realms/leadership3/.well-known/openid-configuration"
     status_code: 200
   register: kc_disc
   retries: 30

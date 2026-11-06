@@ -19,7 +19,7 @@
 - name: Backupscript plaatsen
   ansible.builtin.template:
     src: backup.sh.j2
-    dest: /usr/local/sbin/view360-backup.sh
+    dest: /usr/local/sbin/leadership3-backup.sh
     owner: root
     group: root
     mode: "0700"
@@ -30,8 +30,8 @@
     dest: "/etc/systemd/system/{{ item.dest }}"
     mode: "0644"
   loop:
-    - { src: backup.service.j2, dest: view360-backup.service }
-    - { src: backup.timer.j2,   dest: view360-backup.timer }
+    - { src: backup.service.j2, dest: leadership3-backup.service }
+    - { src: backup.timer.j2,   dest: leadership3-backup.timer }
   notify: Herlaad systemd
 
 - name: Herlaad systemd voor nieuwe unit-bestanden
@@ -39,7 +39,7 @@
 
 - name: Backup-timer inschakelen
   ansible.builtin.systemd:
-    name: view360-backup.timer
+    name: leadership3-backup.timer
     enabled: true
     state: started
     daemon_reload: true
