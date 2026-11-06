@@ -2,7 +2,7 @@
 # Algemene instellingen. Geen geheimen hier: die staan in vault.yml.
 
 domain: view360eco.com
-acme_email: "beheer@view360eco.com"        # PAS AAN: voor Let's Encrypt-meldingen
+acme_email: "apneef@bk-automatisering.nl"        # PAS AAN: voor Let's Encrypt-meldingen
 base_dir: /opt/view360
 proxy_network: proxy
 verify_public_endpoints: false             # zet op true zodra DNS en TLS werken
