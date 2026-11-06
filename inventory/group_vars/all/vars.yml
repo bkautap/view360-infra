@@ -27,7 +27,7 @@ versions:
   nextcloud: "32"                          # laatste major, verifieer
   keycloak: "26.4"
   openproject: "17"                        # slim-variant, verifieer tag
-  flowable: "6.8.1"                        # flowable/flowable-ui
+  flowable: "6.8.0"                        # flowable/flowable-ui (6.8.1 bestaat niet op Docker Hub)
 
 # CrowdSec: actief alleen als de bouncer-sleutel in de vault staat
 crowdsec_enabled: true
