@@ -20,7 +20,7 @@ versions:
   traefik: "v3.6"
   socketproxy: "0.3"
   crowdsec: "v1.7.7"
-  crowdsec_bouncer: "1.0"                  # image: fbonalair/traefik-crowdsec-bouncer
+  crowdsec_bouncer: "latest"               # fbonalair/traefik-crowdsec-bouncer (tag 1.0 bestaat niet; image onderhouden sinds ~2022)
   postgres: "17"
   redis: "7-alpine"
   odoo: "20.0"
