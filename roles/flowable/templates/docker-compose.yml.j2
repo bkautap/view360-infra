@@ -1,0 +1,55 @@
+# Beheerd door Ansible. Niet handmatig aanpassen.
+# Eén container draait IDM, Modeler, Task en Admin. De Modeler bereikbaar via dezelfde host.
+services:
+  flowable-db:
+    image: postgres:{{ versions.postgres }}
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: flowable
+      POSTGRES_USER: flowable
+      POSTGRES_PASSWORD: "{{ vault_flowable_db_password }}"
+    volumes:
+      - flowable-db:/var/lib/postgresql/data
+    networks: [flowable-backend]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U flowable -d flowable"]
+      interval: 10s
+      retries: 10
+
+  flowable:
+    image: flowable/flowable-ui:{{ versions.flowable }}
+    restart: unless-stopped
+    depends_on:
+      flowable-db:
+        condition: service_healthy
+    environment:
+      SPRING_DATASOURCE_DRIVER-CLASS-NAME: org.postgresql.Driver
+      SPRING_DATASOURCE_URL: "jdbc:postgresql://flowable-db:5432/flowable"
+      SPRING_DATASOURCE_USERNAME: flowable
+      SPRING_DATASOURCE_PASSWORD: "{{ vault_flowable_db_password }}"
+      # Achter reverse proxy: forwarded headers door het framework laten verwerken
+      SERVER_FORWARD-HEADERS-STRATEGY: FRAMEWORK
+      # Dedicated servicegebruiker voor interne REST-calls, niet het admin-account
+      FLOWABLE_COMMON_APP_IDM-ADMIN_USER: svc-flowable
+      FLOWABLE_COMMON_APP_IDM-ADMIN_PASSWORD: "{{ vault_flowable_svc_password }}"
+    networks: [proxy, flowable-backend]
+    security_opt:
+      - "no-new-privileges:true"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network={{ proxy_network }}"
+      - "traefik.http.routers.flowable.rule=Host(`{{ flowable_host }}`)"
+      - "traefik.http.routers.flowable.entrypoints=websecure"
+      - "traefik.http.routers.flowable.tls.certresolver=le"
+      - "traefik.http.routers.flowable.middlewares={{ route_middlewares }}"
+      - "traefik.http.services.flowable.loadbalancer.server.port=8080"
+
+volumes:
+  flowable-db:
+    name: flowable-db
+
+networks:
+  proxy:
+    external: true
+  flowable-backend:
+    internal: true

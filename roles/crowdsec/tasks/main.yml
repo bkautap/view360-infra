@@ -1,0 +1,26 @@
+---
+- name: Mappen voor CrowdSec aanmaken
+  ansible.builtin.file:
+    path: "{{ base_dir }}/crowdsec/{{ item }}"
+    state: directory
+    mode: "0750"
+  loop: [config, data]
+
+- name: Acquisition-config (Traefik-logs) renderen
+  ansible.builtin.template:
+    src: acquis.yaml.j2
+    dest: "{{ base_dir }}/crowdsec/config/acquis.yaml"
+    mode: "0644"
+
+- name: CrowdSec docker-compose renderen
+  ansible.builtin.template:
+    src: docker-compose.yml.j2
+    dest: "{{ base_dir }}/crowdsec/docker-compose.yml"
+    mode: "0600"
+
+- name: CrowdSec stack starten
+  ansible.builtin.include_role:
+    name: common
+    tasks_from: deploy_stack
+  vars:
+    stack_name: crowdsec

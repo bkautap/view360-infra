@@ -1,0 +1,41 @@
+---
+- name: View360 platform uitrollen
+  hosts: view360
+  become: true
+
+  pre_tasks:
+    - name: Controleer dat alle vault-variabelen gedefinieerd zijn
+      ansible.builtin.assert:
+        that:
+          - vault_traefik_dashboard_auth is defined
+          - vault_crowdsec_bouncer_key is defined
+          - vault_odoo_db_password is defined
+          - vault_odoo_admin_passwd is defined
+          - vault_nextcloud_db_password is defined
+          - vault_nextcloud_redis_password is defined
+          - vault_nextcloud_admin_password is defined
+          - vault_openproject_db_password is defined
+          - vault_openproject_secret_key_base is defined
+          - vault_keycloak_db_password is defined
+          - vault_keycloak_admin_password is defined
+          - vault_keycloak_client_odoo_secret is defined
+          - vault_keycloak_client_nextcloud_secret is defined
+          - vault_keycloak_client_openproject_secret is defined
+          - vault_keycloak_client_flowable_secret is defined
+          - vault_flowable_db_password is defined
+          - vault_flowable_svc_password is defined
+          - vault_backup_passphrase is defined
+        fail_msg: "Vault-variabelen ontbreken. Zie inventory/group_vars/all/vault.yml.example"
+      tags: [always]
+
+  roles:
+    - { role: common,     tags: [common] }
+    - { role: docker,     tags: [docker] }
+    - { role: traefik,    tags: [traefik] }
+    - { role: crowdsec,   tags: [crowdsec],   when: crowdsec_enabled | bool }
+    - { role: keycloak,   tags: [keycloak] }
+    - { role: odoo,       tags: [odoo] }
+    - { role: nextcloud,  tags: [nextcloud] }
+    - { role: openproject, tags: [openproject] }
+    - { role: flowable,   tags: [flowable] }
+    - { role: backup,     tags: [backup] }

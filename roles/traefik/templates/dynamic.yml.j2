@@ -1,0 +1,32 @@
+# Dynamische configuratie: middlewares. Traefik laadt dit bestand automatisch opnieuw.
+http:
+  middlewares:
+    secure-headers:
+      headers:
+        stsSeconds: 31536000
+        stsIncludeSubdomains: true
+        stsPreload: true
+        contentTypeNosniff: true
+        browserXssFilter: true
+        referrerPolicy: "strict-origin-when-cross-origin"
+        customFrameOptionsValue: "SAMEORIGIN"
+        customResponseHeaders:
+          Server: ""
+          X-Powered-By: ""
+
+    rate-limit:
+      rateLimit:
+        average: 100
+        burst: 200
+
+    dashboard-auth:
+      basicAuth:
+        users:
+          - "{{ vault_traefik_dashboard_auth }}"
+
+{% if crowdsec_active %}
+    crowdsec:
+      forwardAuth:
+        address: "http://crowdsec-bouncer:8080/api/v1/forwardAuth"
+        trustForwardHeader: true
+{% endif %}

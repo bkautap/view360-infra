@@ -1,0 +1,60 @@
+# Beheerd door Ansible. Niet handmatig aanpassen.
+# LET OP: de OIDC-variabelen (OPENPROJECT_OPENID__CONNECT_*) zijn gebaseerd op de
+# naamgeving van OpenProject-configuratie via env. Verifieer ze tegen de actuele docs.
+services:
+  openproject-db:
+    image: postgres:{{ versions.postgres }}
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: openproject
+      POSTGRES_USER: openproject
+      POSTGRES_PASSWORD: "{{ vault_openproject_db_password }}"
+    volumes:
+      - openproject-db:/var/lib/postgresql/data
+    networks: [op-backend]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U openproject -d openproject"]
+      interval: 10s
+      retries: 10
+
+  openproject:
+    image: openproject/openproject:{{ versions.openproject }}-slim
+    restart: unless-stopped
+    depends_on:
+      openproject-db:
+        condition: service_healthy
+    environment:
+      OPENPROJECT_HOST__NAME: "{{ openproject_host }}"
+      OPENPROJECT_HTTPS: "true"
+      OPENPROJECT_SECRET_KEY_BASE: "{{ vault_openproject_secret_key_base }}"
+      DATABASE_URL: "postgres://openproject:{{ vault_openproject_db_password }}@openproject-db/openproject"
+      OPENPROJECT_DEFAULT__LANGUAGE: "nl"
+      OPENPROJECT_OPENID__CONNECT_KEYCLOAK_DISPLAY__NAME: "Keycloak"
+      OPENPROJECT_OPENID__CONNECT_KEYCLOAK_IDENTIFIER: "openproject"
+      OPENPROJECT_OPENID__CONNECT_KEYCLOAK_SECRET: "{{ vault_keycloak_client_openproject_secret }}"
+      OPENPROJECT_OPENID__CONNECT_KEYCLOAK_ISSUER: "https://{{ keycloak_host }}/realms/view360"
+    volumes:
+      - openproject-assets:/var/openproject/assets
+    networks: [proxy, op-backend]
+    security_opt:
+      - "no-new-privileges:true"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network={{ proxy_network }}"
+      - "traefik.http.routers.openproject.rule=Host(`{{ openproject_host }}`)"
+      - "traefik.http.routers.openproject.entrypoints=websecure"
+      - "traefik.http.routers.openproject.tls.certresolver=le"
+      - "traefik.http.routers.openproject.middlewares={{ route_middlewares }}"
+      - "traefik.http.services.openproject.loadbalancer.server.port=80"
+
+volumes:
+  openproject-db:
+    name: openproject-db
+  openproject-assets:
+    name: openproject-assets
+
+networks:
+  proxy:
+    external: true
+  op-backend:
+    internal: true

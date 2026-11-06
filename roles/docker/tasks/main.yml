@@ -1,0 +1,52 @@
+---
+- name: Keyrings-map aanmaken
+  ansible.builtin.file:
+    path: /etc/apt/keyrings
+    state: directory
+    mode: "0755"
+
+- name: Docker GPG-sleutel ophalen
+  ansible.builtin.get_url:
+    url: https://download.docker.com/linux/ubuntu/gpg
+    dest: /etc/apt/keyrings/docker.asc
+    mode: "0644"
+
+# Architectuur staat hard op amd64. Pas aan voor andere hardware.
+- name: Docker apt-repository toevoegen
+  ansible.builtin.apt_repository:
+    repo: >-
+      deb [arch=amd64 signed-by=/etc/apt/keyrings/docker.asc]
+      https://download.docker.com/linux/ubuntu {{ ansible_facts['distribution_release'] }} stable
+    filename: docker
+    state: present
+
+- name: Docker Engine en Compose plugin installeren
+  ansible.builtin.apt:
+    name:
+      - docker-ce
+      - docker-ce-cli
+      - containerd.io
+      - docker-buildx-plugin
+      - docker-compose-plugin
+    state: present
+    update_cache: true
+
+- name: daemon.json plaatsen (logrotatie, hardening)
+  ansible.builtin.template:
+    src: daemon.json.j2
+    dest: /etc/docker/daemon.json
+    mode: "0644"
+  notify: Herstart docker
+
+- name: Docker-service inschakelen
+  ansible.builtin.service:
+    name: docker
+    state: started
+    enabled: true
+
+# Het proxy-netwerk wordt door Traefik en alle publieke services gedeeld.
+- name: Proxy-netwerk aanmaken
+  ansible.builtin.command: "docker network create {{ proxy_network }}"
+  register: proxy_net
+  changed_when: proxy_net.rc == 0
+  failed_when: proxy_net.rc != 0 and 'already exists' not in proxy_net.stderr

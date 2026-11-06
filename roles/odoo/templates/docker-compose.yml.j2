@@ -1,0 +1,67 @@
+# Beheerd door Ansible. Niet handmatig aanpassen.
+services:
+  odoo-db:
+    image: postgres:{{ versions.postgres }}
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: odoo
+      POSTGRES_PASSWORD: "{{ vault_odoo_db_password }}"
+      POSTGRES_DB: postgres
+    volumes:
+      - odoo-db:/var/lib/postgresql/data
+    networks: [odoo-backend]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U odoo"]
+      interval: 10s
+      retries: 10
+
+  odoo:
+    image: odoo:{{ versions.odoo }}
+    restart: unless-stopped
+    depends_on:
+      odoo-db:
+        condition: service_healthy
+    environment:
+      HOST: odoo-db
+      USER: odoo
+      PASSWORD: "{{ vault_odoo_db_password }}"
+    volumes:
+      - odoo-data:/var/lib/odoo
+      - ./config/odoo.conf:/etc/odoo/odoo.conf:ro
+      - ./addons:/mnt/extra-addons:ro
+    networks: [proxy, odoo-backend]
+    security_opt:
+      - "no-new-privileges:true"
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8069/web/health', timeout=5)"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network={{ proxy_network }}"
+      # Hoofdsite
+      - "traefik.http.routers.odoo.rule=Host(`{{ odoo_host }}`) || Host(`www.{{ odoo_host }}`)"
+      - "traefik.http.routers.odoo.entrypoints=websecure"
+      - "traefik.http.routers.odoo.tls.certresolver=le"
+      - "traefik.http.routers.odoo.middlewares={{ route_middlewares }}"
+      - "traefik.http.routers.odoo.service=odoo"
+      - "traefik.http.services.odoo.loadbalancer.server.port=8069"
+      # Longpolling / websocket (poort 8072)
+      - "traefik.http.routers.odoo-ws.rule=Host(`{{ odoo_host }}`) && PathPrefix(`/websocket`)"
+      - "traefik.http.routers.odoo-ws.entrypoints=websecure"
+      - "traefik.http.routers.odoo-ws.tls.certresolver=le"
+      - "traefik.http.routers.odoo-ws.service=odoo-ws"
+      - "traefik.http.services.odoo-ws.loadbalancer.server.port=8072"
+
+volumes:
+  odoo-db:
+    name: odoo-db
+  odoo-data:
+    name: odoo-data
+
+networks:
+  proxy:
+    external: true
+  odoo-backend:
+    internal: true

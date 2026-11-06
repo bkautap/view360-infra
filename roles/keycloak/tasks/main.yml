@@ -1,0 +1,38 @@
+---
+- name: Mappen voor Keycloak aanmaken
+  ansible.builtin.file:
+    path: "{{ base_dir }}/keycloak/realm"
+    state: directory
+    mode: "0750"
+
+# Realm bevat clientsecrets. Keycloak-image draait als uid 1000.
+- name: Realm-import renderen
+  ansible.builtin.template:
+    src: view360-realm.json.j2
+    dest: "{{ base_dir }}/keycloak/realm/view360-realm.json"
+    owner: "1000"
+    group: "1000"
+    mode: "0400"
+
+- name: Keycloak docker-compose renderen
+  ansible.builtin.template:
+    src: docker-compose.yml.j2
+    dest: "{{ base_dir }}/keycloak/docker-compose.yml"
+    mode: "0600"
+
+- name: Keycloak stack starten
+  ansible.builtin.include_role:
+    name: common
+    tasks_from: deploy_stack
+  vars:
+    stack_name: keycloak
+
+- name: Controleer publieke OIDC-discovery
+  ansible.builtin.uri:
+    url: "https://{{ keycloak_host }}/realms/view360/.well-known/openid-configuration"
+    status_code: 200
+  register: kc_disc
+  retries: 30
+  delay: 10
+  until: kc_disc.status == 200
+  when: verify_public_endpoints | bool

@@ -1,0 +1,66 @@
+{
+  "realm": "view360",
+  "displayName": "View360",
+  "enabled": true,
+  "sslRequired": "external",
+  "registrationAllowed": false,
+  "resetPasswordAllowed": true,
+  "bruteForceProtected": true,
+  "passwordPolicy": "length(12) and notUsername",
+  "roles": {
+    "realm": [
+      { "name": "view360-admin", "description": "Beheerder over alle applicaties" },
+      { "name": "view360-user", "description": "Standaardgebruiker" }
+    ]
+  },
+  "clients": [
+    {
+      "clientId": "odoo",
+      "name": "Odoo",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": false,
+      "secret": "{{ vault_keycloak_client_odoo_secret }}",
+      "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": false,
+      "redirectUris": ["https://{{ odoo_host }}/auth_oauth/signin"],
+      "webOrigins": ["https://{{ odoo_host }}"]
+    },
+    {
+      "clientId": "nextcloud",
+      "name": "Nextcloud",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": false,
+      "secret": "{{ vault_keycloak_client_nextcloud_secret }}",
+      "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": false,
+      "redirectUris": ["https://{{ nextcloud_host }}/apps/user_oidc/code"],
+      "webOrigins": ["https://{{ nextcloud_host }}"]
+    },
+    {
+      "clientId": "openproject",
+      "name": "OpenProject",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": false,
+      "secret": "{{ vault_keycloak_client_openproject_secret }}",
+      "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": false,
+      "redirectUris": ["https://{{ openproject_host }}/auth/keycloak/callback"],
+      "webOrigins": ["https://{{ openproject_host }}"]
+    },
+    {
+      "clientId": "flowable",
+      "name": "Flowable",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": false,
+      "secret": "{{ vault_keycloak_client_flowable_secret }}",
+      "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": false,
+      "redirectUris": ["https://{{ flowable_host }}/*"],
+      "webOrigins": ["https://{{ flowable_host }}"]
+    }
+  ]
+}

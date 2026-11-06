@@ -1,0 +1,5 @@
+---
+- name: Herstart ssh
+  ansible.builtin.service:
+    name: ssh
+    state: restarted

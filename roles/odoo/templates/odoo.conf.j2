@@ -1,0 +1,22 @@
+# Beheerd door Ansible. Databasegegevens komen via de container-env (HOST/USER/PASSWORD).
+[options]
+admin_passwd = {{ vault_odoo_admin_passwd }}
+
+# Achter Traefik: vertrouw X-Forwarded-* headers
+proxy_mode = True
+
+# Databasemanager uit: geen publieke lijst van databases
+list_db = False
+
+data_dir = /var/lib/odoo
+addons_path = /mnt/extra-addons
+
+# Workers en geheugen. Pas aan op basis van de VM-grootte.
+workers = {{ odoo_workers }}
+max_cron_threads = 1
+limit_memory_soft = 2147483648
+limit_memory_hard = 2684354560
+limit_time_cpu = 120
+limit_time_real = 240
+
+log_level = info

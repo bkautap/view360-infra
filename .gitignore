@@ -1,0 +1,8 @@
+.vault_pass
+*.retry
+ansible.log
+.venv/
+__pycache__/
+# Ongeversleutelde vault nooit committen
+inventory/group_vars/all/vault.yml
+!inventory/group_vars/all/vault.yml.example

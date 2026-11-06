@@ -1,0 +1,32 @@
+# Beheerd door Ansible. De bouncer start pas als vault_crowdsec_bouncer_key gevuld is.
+services:
+  crowdsec:
+    image: crowdsecurity/crowdsec:{{ versions.crowdsec }}
+    restart: unless-stopped
+    environment:
+      COLLECTIONS: "crowdsecurity/traefik crowdsecurity/base-http-scenarios crowdsecurity/http-cve"
+    volumes:
+      - ./config/acquis.yaml:/etc/crowdsec/acquis.yaml:ro
+      - ./data:/var/lib/crowdsec/data
+      - {{ base_dir }}/traefik/logs:/var/log/traefik:ro
+    networks: [crowdsec-net]
+    security_opt:
+      - "no-new-privileges:true"
+{% if crowdsec_active %}
+
+  crowdsec-bouncer:
+    image: fbonalair/traefik-crowdsec-bouncer:{{ versions.crowdsec_bouncer }}
+    restart: unless-stopped
+    environment:
+      CROWDSEC_AGENT_HOST: "crowdsec:8080"
+      CROWDSEC_BOUNCER_API_KEY: "{{ vault_crowdsec_bouncer_key }}"
+    networks: [proxy, crowdsec-net]
+    security_opt:
+      - "no-new-privileges:true"
+{% endif %}
+
+networks:
+  proxy:
+    external: true
+  crowdsec-net:
+    driver: bridge

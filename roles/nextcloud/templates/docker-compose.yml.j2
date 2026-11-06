@@ -1,0 +1,80 @@
+# Beheerd door Ansible. Niet handmatig aanpassen.
+services:
+  nextcloud-db:
+    image: postgres:{{ versions.postgres }}
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: nextcloud
+      POSTGRES_USER: nextcloud
+      POSTGRES_PASSWORD: "{{ vault_nextcloud_db_password }}"
+    volumes:
+      - nextcloud-db:/var/lib/postgresql/data
+    networks: [nc-backend]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U nextcloud -d nextcloud"]
+      interval: 10s
+      retries: 10
+
+  nextcloud-redis:
+    image: redis:{{ versions.redis }}
+    restart: unless-stopped
+    command: ["redis-server", "--requirepass", "{{ vault_nextcloud_redis_password }}"]
+    networks: [nc-backend]
+
+  nextcloud:
+    image: nextcloud:{{ versions.nextcloud }}-apache
+    restart: unless-stopped
+    depends_on:
+      nextcloud-db:
+        condition: service_healthy
+      nextcloud-redis:
+        condition: service_started
+    environment:
+      POSTGRES_HOST: nextcloud-db
+      POSTGRES_DB: nextcloud
+      POSTGRES_USER: nextcloud
+      POSTGRES_PASSWORD: "{{ vault_nextcloud_db_password }}"
+      NEXTCLOUD_ADMIN_USER: "{{ nextcloud_admin_user }}"
+      NEXTCLOUD_ADMIN_PASSWORD: "{{ vault_nextcloud_admin_password }}"
+      NEXTCLOUD_TRUSTED_DOMAINS: "{{ nextcloud_host }}"
+      OVERWRITEPROTOCOL: https
+      OVERWRITEHOST: "{{ nextcloud_host }}"
+      # Docker-bridge-subnetten: Traefik is de enige proxy
+      TRUSTED_PROXIES: "172.16.0.0/12"
+      REDIS_HOST: nextcloud-redis
+      REDIS_HOST_PASSWORD: "{{ vault_nextcloud_redis_password }}"
+    volumes:
+      - nextcloud-app:/var/www/html
+    networks: [proxy, nc-backend]
+    security_opt:
+      - "no-new-privileges:true"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network={{ proxy_network }}"
+      - "traefik.http.routers.nextcloud.rule=Host(`{{ nextcloud_host }}`)"
+      - "traefik.http.routers.nextcloud.entrypoints=websecure"
+      - "traefik.http.routers.nextcloud.tls.certresolver=le"
+      - "traefik.http.routers.nextcloud.middlewares={{ route_middlewares }}"
+      - "traefik.http.services.nextcloud.loadbalancer.server.port=80"
+
+  # Achtergrondtaken via cron.sh, niet via AJAX (aanbevolen door Nextcloud)
+  nextcloud-cron:
+    image: nextcloud:{{ versions.nextcloud }}-apache
+    restart: unless-stopped
+    entrypoint: /cron.sh
+    depends_on: [nextcloud]
+    volumes:
+      - nextcloud-app:/var/www/html
+    networks: [nc-backend]
+
+volumes:
+  nextcloud-db:
+    name: nextcloud-db
+  nextcloud-app:
+    name: nextcloud-app
+
+networks:
+  proxy:
+    external: true
+  nc-backend:
+    internal: true

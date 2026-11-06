@@ -1,0 +1,44 @@
+# Beheerd door Ansible. Niet handmatig aanpassen.
+services:
+  socketproxy:
+    image: tecnativa/docker-socket-proxy:{{ versions.socketproxy }}
+    restart: unless-stopped
+    environment:
+      CONTAINERS: 1
+      NETWORKS: 1
+      POST: 0
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks: [socketproxy]
+    security_opt:
+      - "no-new-privileges:true"
+
+  traefik:
+    image: traefik:{{ versions.traefik }}
+    restart: unless-stopped
+    depends_on: [socketproxy]
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./traefik.yml:/etc/traefik/traefik.yml:ro
+      - ./dynamic:/etc/traefik/dynamic:ro
+      - ./letsencrypt:/letsencrypt
+      - ./logs:/var/log/traefik
+    networks: [proxy, socketproxy]
+    security_opt:
+      - "no-new-privileges:true"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network={{ proxy_network }}"
+      - "traefik.http.routers.dashboard.rule=Host(`{{ traefik_host }}`)"
+      - "traefik.http.routers.dashboard.entrypoints=websecure"
+      - "traefik.http.routers.dashboard.tls.certresolver=le"
+      - "traefik.http.routers.dashboard.service=api@internal"
+      - "traefik.http.routers.dashboard.middlewares=dashboard-auth@file"
+
+networks:
+  proxy:
+    external: true
+  socketproxy:
+    internal: true

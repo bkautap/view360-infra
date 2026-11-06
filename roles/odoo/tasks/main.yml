@@ -1,0 +1,29 @@
+---
+- name: Mappen voor Odoo aanmaken
+  ansible.builtin.file:
+    path: "{{ base_dir }}/odoo/{{ item }}"
+    state: directory
+    mode: "0750"
+  loop: [config, addons]
+
+# odoo.conf bevat het admin-wachtwoord. De officiële image draait als uid 101.
+- name: odoo.conf renderen
+  ansible.builtin.template:
+    src: odoo.conf.j2
+    dest: "{{ base_dir }}/odoo/config/odoo.conf"
+    owner: "101"
+    group: "101"
+    mode: "0400"
+
+- name: Odoo docker-compose renderen
+  ansible.builtin.template:
+    src: docker-compose.yml.j2
+    dest: "{{ base_dir }}/odoo/docker-compose.yml"
+    mode: "0600"
+
+- name: Odoo stack starten
+  ansible.builtin.include_role:
+    name: common
+    tasks_from: deploy_stack
+  vars:
+    stack_name: odoo

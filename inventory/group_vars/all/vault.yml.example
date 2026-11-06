@@ -1,0 +1,34 @@
+---
+# KOPIEER naar vault.yml, vul in en versleutel:
+#   ansible-vault encrypt inventory/group_vars/all/vault.yml
+# Geheimen genereren: openssl rand -base64 32
+# Traefik dashboard-hash: htpasswd -nB admin   (dubbele $ verdubbelen in YAML: $$)
+
+vault_traefik_dashboard_auth: "admin:CHANGE_ME_HASH"
+
+# Leeg laten tot de bouncer-sleutel bestaat (zie README, stap 7)
+vault_crowdsec_bouncer_key: ""
+
+vault_odoo_db_password: "CHANGE_ME"
+vault_odoo_admin_passwd: "CHANGE_ME"
+
+vault_nextcloud_db_password: "CHANGE_ME"
+vault_nextcloud_redis_password: "CHANGE_ME"
+vault_nextcloud_admin_password: "CHANGE_ME"
+
+vault_openproject_db_password: "CHANGE_ME"
+vault_openproject_secret_key_base: "CHANGE_ME"
+
+vault_keycloak_db_password: "CHANGE_ME"
+vault_keycloak_admin_password: "CHANGE_ME"
+
+# OIDC-clientsecrets (moeten gelijk zijn aan wat in de realm/apps staat)
+vault_keycloak_client_odoo_secret: "CHANGE_ME"
+vault_keycloak_client_nextcloud_secret: "CHANGE_ME"
+vault_keycloak_client_openproject_secret: "CHANGE_ME"
+vault_keycloak_client_flowable_secret: "CHANGE_ME"
+
+vault_flowable_db_password: "CHANGE_ME"
+vault_flowable_svc_password: "CHANGE_ME"   # wachtwoord van svc-flowable in IDM
+
+vault_backup_passphrase: "CHANGE_ME"

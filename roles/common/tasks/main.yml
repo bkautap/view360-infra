@@ -1,0 +1,61 @@
+---
+- name: Installeer basispakketten
+  ansible.builtin.apt:
+    name:
+      - ufw
+      - unattended-upgrades
+      - curl
+      - ca-certificates
+      - gnupg
+      - rsync
+      - jq
+    state: present
+    update_cache: true
+    cache_valid_time: 3600
+
+- name: Automatische security-updates aanzetten
+  ansible.builtin.copy:
+    dest: /etc/apt/apt.conf.d/20auto-upgrades
+    mode: "0644"
+    content: |
+      APT::Periodic::Update-Package-Lists "1";
+      APT::Periodic::Unattended-Upgrade "1";
+
+# Let op: zorg dat je SSH-key-login werkt voordat je dit draait.
+- name: SSH - wachtwoordlogin uitschakelen
+  ansible.builtin.lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: "^#?PasswordAuthentication"
+    line: "PasswordAuthentication no"
+    validate: "sshd -t -f %s"
+  notify: Herstart ssh
+
+- name: SSH - root alleen met sleutel
+  ansible.builtin.lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: "^#?PermitRootLogin"
+    line: "PermitRootLogin prohibit-password"
+    validate: "sshd -t -f %s"
+  notify: Herstart ssh
+
+- name: Firewall - standaard alles dicht
+  community.general.ufw:
+    direction: incoming
+    policy: deny
+
+- name: Firewall - SSH, HTTP en HTTPS open
+  community.general.ufw:
+    rule: allow
+    port: "{{ item }}"
+    proto: tcp
+  loop: ["22", "80", "443"]
+
+- name: Firewall - inschakelen
+  community.general.ufw:
+    state: enabled
+
+- name: Maak basismap aan
+  ansible.builtin.file:
+    path: "{{ base_dir }}"
+    state: directory
+    mode: "0750"

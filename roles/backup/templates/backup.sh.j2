@@ -1,0 +1,54 @@
+#!/usr/bin/env bash
+# Beheerd door Ansible. Dumpt databases en volumes, controleert, versleutelt en ruimt op.
+set -euo pipefail
+umask 077
+
+BACKUP_ROOT="{{ backup_dir }}"
+TS="$(date +%Y%m%d-%H%M%S)"
+WORK="${BACKUP_ROOT}/${TS}"
+
+log() { echo "[$(date -Is)] $*"; }
+
+mkdir -p "${WORK}"
+log "Start backup ${TS}"
+
+# 1. Databases (pg_dumpall per container, via de lokale socket in de container)
+{% for db in backup_db_containers %}
+log "Database {{ db.container }}"
+docker exec "{{ db.container }}" pg_dumpall -U "{{ db.user }}" | gzip > "${WORK}/{{ db.container }}.sql.gz"
+{% endfor %}
+
+# 2. Volumes
+{% for vol in backup_volumes %}
+log "Volume {{ vol }}"
+docker run --rm -v "{{ vol }}:/src:ro" -v "${WORK}:/dst" alpine:3 \
+  tar czf "/dst/{{ vol }}.tar.gz" -C /src .
+{% endfor %}
+
+# 3. Configuratie (certificaten uitgesloten; die worden opnieuw uitgegeven)
+tar czf "${WORK}/config.tar.gz" -C "{{ base_dir }}" --exclude="letsencrypt" .
+
+# 4. Controle: alle dumps moeten geldige gzip zijn en niet leeg
+for f in "${WORK}"/*.sql.gz; do
+  gzip -t "$f"
+  [ -s "$f" ] || { log "FOUT: lege dump $f"; exit 1; }
+done
+
+# 5. Versleutelen naar één bestand, daarna de losse map verwijderen
+tar czf - -C "${BACKUP_ROOT}" "${TS}" \
+  | gpg --batch --yes --symmetric --cipher-algo AES256 \
+        --passphrase-file "{{ backup_passphrase_file }}" \
+        -o "${BACKUP_ROOT}/${TS}.tar.gz.gpg"
+rm -rf "${WORK}"
+log "Versleuteld: ${TS}.tar.gz.gpg"
+
+# 6. Retentie
+find "${BACKUP_ROOT}" -maxdepth 1 -name '*.tar.gz.gpg' -mtime +{{ backup_retention_days }} -delete
+
+{% if backup_remote %}
+# 7. Offsite kopie
+rsync -a "${BACKUP_ROOT}/" "{{ backup_remote }}"
+log "Offsite gesynchroniseerd naar {{ backup_remote }}"
+{% endif %}
+
+log "Klaar"

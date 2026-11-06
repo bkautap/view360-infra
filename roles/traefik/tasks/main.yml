@@ -1,0 +1,40 @@
+---
+- name: Mappen voor Traefik aanmaken
+  ansible.builtin.file:
+    path: "{{ base_dir }}/traefik/{{ item }}"
+    state: directory
+    mode: "0750"
+  loop: [dynamic, logs, letsencrypt]
+
+- name: acme.json aanmaken met 0600
+  ansible.builtin.file:
+    path: "{{ base_dir }}/traefik/letsencrypt/acme.json"
+    state: touch
+    mode: "0600"
+    modification_time: preserve
+    access_time: preserve
+
+- name: Statische Traefik-config renderen
+  ansible.builtin.template:
+    src: traefik.yml.j2
+    dest: "{{ base_dir }}/traefik/traefik.yml"
+    mode: "0644"
+
+- name: Dynamische config (middlewares) renderen
+  ansible.builtin.template:
+    src: dynamic.yml.j2
+    dest: "{{ base_dir }}/traefik/dynamic/middlewares.yml"
+    mode: "0644"
+
+- name: Traefik docker-compose renderen
+  ansible.builtin.template:
+    src: docker-compose.yml.j2
+    dest: "{{ base_dir }}/traefik/docker-compose.yml"
+    mode: "0600"
+
+- name: Traefik stack starten
+  ansible.builtin.include_role:
+    name: common
+    tasks_from: deploy_stack
+  vars:
+    stack_name: traefik

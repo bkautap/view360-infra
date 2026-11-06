@@ -1,0 +1,10 @@
+---
+# Gedeelde taak: start of update één compose-stack.
+# Verwacht: stack_name (mapnaam onder base_dir, met docker-compose.yml erin).
+# Docker Compose herstart alleen containers waarvan de configuratie is gewijzigd.
+- name: "Stack {{ stack_name }} starten of bijwerken"
+  community.docker.docker_compose_v2:
+    project_src: "{{ base_dir }}/{{ stack_name }}"
+    state: present
+    pull: missing
+    remove_orphans: true

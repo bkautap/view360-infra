@@ -1,0 +1,59 @@
+---
+# Algemene instellingen. Geen geheimen hier: die staan in vault.yml.
+
+domain: view360eco.com
+acme_email: "beheer@view360eco.com"        # PAS AAN: voor Let's Encrypt-meldingen
+base_dir: /opt/view360
+proxy_network: proxy
+verify_public_endpoints: false             # zet op true zodra DNS en TLS werken
+
+# Hostnames
+odoo_host: "{{ domain }}"
+nextcloud_host: "dms.{{ domain }}"
+openproject_host: "project.{{ domain }}"
+flowable_host: "flow.{{ domain }}"
+keycloak_host: "auth.{{ domain }}"
+traefik_host: "traefik.{{ domain }}"
+
+# Versies: gepind. Verifieer elke tag op Docker Hub / quay.io voor uitrol.
+versions:
+  traefik: "v3.6"
+  socketproxy: "0.3"
+  crowdsec: "v1.7"
+  crowdsec_bouncer: "1.0"                  # image: fbonalair/traefik-crowdsec-bouncer
+  postgres: "17"
+  redis: "7-alpine"
+  odoo: "20.0"
+  nextcloud: "32"                          # laatste major, verifieer
+  keycloak: "26.4"
+  openproject: "17"                        # slim-variant, verifieer tag
+  flowable: "6.8.1"                        # flowable/flowable-ui
+
+# CrowdSec: actief alleen als de bouncer-sleutel in de vault staat
+crowdsec_enabled: true
+crowdsec_active: "{{ crowdsec_enabled and (vault_crowdsec_bouncer_key | default('') | length > 0) }}"
+
+# Middlewares die op elke publieke route komen
+route_middlewares: "secure-headers@file,rate-limit@file{{ ',crowdsec@file' if crowdsec_active else '' }}"
+
+# Odoo
+odoo_workers: 4                            # ~1 worker per vCPU, begin conservatief
+
+# Nextcloud
+nextcloud_admin_user: "nc-admin"
+
+# Backups
+backup_dir: /var/backups/view360
+backup_retention_days: 14
+backup_remote: ""                          # bijv. "backup@backuphost:/srv/backups/view360/"
+backup_passphrase_file: /root/.backup-passphrase
+backup_db_containers:
+  - { container: odoo-db, user: odoo }
+  - { container: nextcloud-db, user: nextcloud }
+  - { container: openproject-db, user: openproject }
+  - { container: keycloak-db, user: keycloak }
+  - { container: flowable-db, user: flowable }
+backup_volumes:
+  - odoo-data
+  - nextcloud-app
+  - openproject-assets

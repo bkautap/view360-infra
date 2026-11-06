@@ -1,0 +1,8 @@
+[Unit]
+Description=View360 backup (databases, volumes, config)
+After=docker.service network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/view360-backup.sh

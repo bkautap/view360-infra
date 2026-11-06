@@ -1,0 +1,45 @@
+---
+- name: Backupmap aanmaken
+  ansible.builtin.file:
+    path: "{{ backup_dir }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0700"
+
+- name: Passphrase-bestand plaatsen
+  ansible.builtin.copy:
+    dest: "{{ backup_passphrase_file }}"
+    content: "{{ vault_backup_passphrase }}"
+    owner: root
+    group: root
+    mode: "0600"
+  no_log: true
+
+- name: Backupscript plaatsen
+  ansible.builtin.template:
+    src: backup.sh.j2
+    dest: /usr/local/sbin/view360-backup.sh
+    owner: root
+    group: root
+    mode: "0700"
+
+- name: systemd service en timer plaatsen
+  ansible.builtin.template:
+    src: "{{ item.src }}"
+    dest: "/etc/systemd/system/{{ item.dest }}"
+    mode: "0644"
+  loop:
+    - { src: backup.service.j2, dest: view360-backup.service }
+    - { src: backup.timer.j2,   dest: view360-backup.timer }
+  notify: Herlaad systemd
+
+- name: Herlaad systemd voor nieuwe unit-bestanden
+  ansible.builtin.meta: flush_handlers
+
+- name: Backup-timer inschakelen
+  ansible.builtin.systemd:
+    name: view360-backup.timer
+    enabled: true
+    state: started
+    daemon_reload: true

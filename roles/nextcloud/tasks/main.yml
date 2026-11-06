@@ -1,0 +1,19 @@
+---
+- name: Mappen voor Nextcloud aanmaken
+  ansible.builtin.file:
+    path: "{{ base_dir }}/nextcloud"
+    state: directory
+    mode: "0750"
+
+- name: Nextcloud docker-compose renderen
+  ansible.builtin.template:
+    src: docker-compose.yml.j2
+    dest: "{{ base_dir }}/nextcloud/docker-compose.yml"
+    mode: "0600"
+
+- name: Nextcloud stack starten
+  ansible.builtin.include_role:
+    name: common
+    tasks_from: deploy_stack
+  vars:
+    stack_name: nextcloud
