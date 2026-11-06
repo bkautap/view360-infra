@@ -19,7 +19,7 @@ traefik_host: "traefik.{{ domain }}"
 versions:
   traefik: "v3.6"
   socketproxy: "0.3"
-  crowdsec: "v1.7"
+  crowdsec: "v1.7.7"
   crowdsec_bouncer: "1.0"                  # image: fbonalair/traefik-crowdsec-bouncer
   postgres: "17"
   redis: "7-alpine"
