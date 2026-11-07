@@ -1,10 +1,13 @@
 ---
 - name: Mappen voor Odoo aanmaken
   ansible.builtin.file:
-    path: "{{ base_dir }}/odoo/{{ item }}"
+    path: "{{ base_dir }}/odoo/{{ item.name }}"
     state: directory
-    mode: "0750"
-  loop: [config, addons]
+    mode: "{{ item.mode }}"
+  loop:
+    - { name: config, mode: "0750" }
+    # Addons zijn geen geheimen; de odoo-gebruiker in de container moet de map kunnen lezen
+    - { name: addons, mode: "0755" }
 
 # odoo.conf bevat het admin-wachtwoord. Tijdelijk 0644 omdat de uid van de
 # odoo-gebruiker in de image niet bevestigd is. Zet na verificatie
