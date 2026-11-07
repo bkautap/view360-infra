@@ -18,6 +18,8 @@ services:
   odoo:
     image: odoo:{{ versions.odoo }}
     restart: unless-stopped
+    # Expliciet op alle interfaces: het configbestand alleen bleek niet genoeg
+    command: ["odoo", "--http-interface=0.0.0.0", "--http-port=8069"]
     depends_on:
       odoo-db:
         condition: service_healthy
