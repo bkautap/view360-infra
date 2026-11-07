@@ -48,11 +48,11 @@ backup_retention_days: 14
 backup_remote: ""                          # bijv. "backup@backuphost:/srv/backups/leadership3/"
 backup_passphrase_file: /root/.backup-passphrase
 backup_db_containers:
-  - { container: odoo-db, user: odoo }
-  - { container: nextcloud-db, user: nextcloud }
-  - { container: openproject-db, user: openproject }
-  - { container: keycloak-db, user: keycloak }
-  - { container: flowable-db, user: flowable }
+  - { container: odoo-odoo-db-1, user: odoo }
+  - { container: nextcloud-nextcloud-db-1, user: nextcloud }
+  - { container: openproject-openproject-db-1, user: openproject }
+  - { container: keycloak-keycloak-db-1, user: keycloak }
+  - { container: flowable-flowable-db-1, user: flowable }
 backup_volumes:
   - odoo-data
   - nextcloud-app
