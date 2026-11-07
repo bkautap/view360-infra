@@ -20,6 +20,24 @@
     group: root
     mode: "0644"
 
+- name: Build-map voor de eigen Odoo-image
+  ansible.builtin.file:
+    path: "{{ base_dir }}/odoo/build"
+    state: directory
+    mode: "0755"
+
+- name: Dockerfile renderen
+  ansible.builtin.template:
+    src: Dockerfile.j2
+    dest: "{{ base_dir }}/odoo/build/Dockerfile"
+    mode: "0644"
+  register: odoo_dockerfile
+
+- name: Eigen Odoo-image opnieuw bouwen bij wijziging
+  ansible.builtin.command: "docker compose --project-directory {{ base_dir }}/odoo build odoo"
+  when: odoo_dockerfile.changed
+  changed_when: true
+
 - name: Odoo docker-compose renderen
   ansible.builtin.template:
     src: docker-compose.yml.j2

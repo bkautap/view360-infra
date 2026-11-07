@@ -1,0 +1,7 @@
+# Beheerd door Ansible. Officiële Odoo-image + python-jose (vereist door externe addons).
+FROM odoo:{{ versions.odoo }}
+USER root
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends python3-jose \
+ && rm -rf /var/lib/apt/lists/*
+USER odoo

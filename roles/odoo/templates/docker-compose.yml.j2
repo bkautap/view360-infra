@@ -16,7 +16,9 @@ services:
       retries: 10
 
   odoo:
-    image: odoo:{{ versions.odoo }}
+    build:
+      context: ./build
+    image: odoo-custom:{{ versions.odoo }}
     restart: unless-stopped
     # Expliciet op alle interfaces: het configbestand alleen bleek niet genoeg
     command: ["odoo", "--http-interface=0.0.0.0", "--http-port=8069"]
