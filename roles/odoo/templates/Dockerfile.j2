@@ -1,7 +1,7 @@
-# Beheerd door Ansible. Officiële Odoo-image + python-jose (vereist door externe addons).
+# Beheerd door Ansible. Officiële Odoo-image + python-jose (externe addons) en markdown2 (mail-rendering).
 FROM odoo:{{ versions.odoo }}
 USER root
 RUN apt-get update \
- && apt-get install -y --no-install-recommends python3-jose \
+ && apt-get install -y --no-install-recommends python3-jose python3-markdown2 \
  && rm -rf /var/lib/apt/lists/*
 USER odoo
