@@ -37,6 +37,7 @@ crowdsec_active: "{{ crowdsec_enabled and (vault_crowdsec_bouncer_key | default(
 route_middlewares: "secure-headers@file,rate-limit@file{{ ',crowdsec@file' if crowdsec_active else '' }}"
 
 # Odoo
+odoo_db_name: leadership3              # naam van de Odoo-database (dbfilter)
 odoo_workers: 4                            # ~1 worker per vCPU, begin conservatief
 
 # Nextcloud

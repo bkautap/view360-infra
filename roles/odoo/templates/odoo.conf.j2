@@ -12,6 +12,9 @@ proxy_mode = True
 # Databasemanager uit: geen publieke lijst van databases
 list_db = False
 
+# Kies de database op basis van de naam, niet via de databasemanager
+dbfilter = ^{{ odoo_db_name }}$
+
 data_dir = /var/lib/odoo
 addons_path = /mnt/extra-addons
 
