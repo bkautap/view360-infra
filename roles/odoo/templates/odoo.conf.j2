@@ -15,6 +15,9 @@ list_db = False
 # Kies de database op basis van de naam, niet via de databasemanager
 dbfilter = ^{{ odoo_db_name }}$
 
+# Standaarddatabase: Odoo gebruikt deze zonder databaseselector
+db_name = {{ odoo_db_name }}
+
 data_dir = /var/lib/odoo
 addons_path = /mnt/extra-addons
 
